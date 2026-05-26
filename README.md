@@ -75,6 +75,38 @@ Receiving users must have `translation_enabled = true` in `translation_user_lang
 | Admin shows “Loading analytics…” forever | Postgres at `192.168.1.206` must be reachable; check `/api/health` |
 | `npm start` hangs then exits | DB migration failed — fix `DATABASE_URL` or `set SKIP_DB_MIGRATE=true` |
 
+## Deploy on Railway
+
+You **do not commit live database data**. Schema and demo seed are in `db/migrations/` (already in git). On every deploy, `npm start` runs migrations first, then starts Next.js.
+
+### One-time Railway setup
+
+1. Create a project from this repo (`translate-keyra` on CodeCommit or GitHub).
+2. Add a **PostgreSQL** service (or use an existing `DATABASE_URL`).
+3. On the **web** service, set variable:
+   - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` (reference from the Postgres plugin)
+4. Build command: `npm run build` (default)
+5. Start command: `npm start` (runs migrate + seed, then `next start`)
+
+`RAILWAY_ENVIRONMENT` is set automatically and enables SSL for Postgres.
+
+### What runs on first deploy
+
+| Migration | Purpose |
+|-----------|---------|
+| `000_auth_stubs.sql` | `auth_users` table + 2 demo users (skipped if `auth_users` already has rows) |
+| `001_translation_schema.sql` | All `translation_*` tables + default platform config |
+| `002_seed_data.sql` | Demo calls, transcripts, billing, language configs (skipped if `translation_call` already has rows) |
+
+Re-deploys are safe: applied migrations are tracked in `translate_schema_migrations`.
+
+### Verify after deploy
+
+- `GET https://<your-app>.up.railway.app/api/health` — should report DB connected
+- Admin: `/admin/dashboard`
+
+See `env.example` for local/Railway variables.
+
 ## Scripts
 
 - `npm run dev` — development server (port **3010**)
