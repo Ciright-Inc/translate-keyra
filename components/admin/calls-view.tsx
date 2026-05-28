@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useAuthSession } from "@/components/auth/auth-guard";
 import { fetchJson } from "@/lib/fetch-json";
 
 type CallRow = {
@@ -20,8 +21,10 @@ type CallRow = {
 };
 
 export function CallsView() {
+  const { user } = useAuthSession();
   const [calls, setCalls] = useState<CallRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const fromUid = user?.id ?? Number(process.env.NEXT_PUBLIC_TRANSLATE_DEV_UID ?? 1);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -34,7 +37,13 @@ export function CallsView() {
   }, []);
 
   useEffect(() => {
-    load();
+    const timer = window.setTimeout(() => {
+      load();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [load]);
 
   async function initiateDemoCall() {
@@ -42,7 +51,7 @@ export function CallsView() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        from_uid: 1,
+        from_uid: fromUid,
         to_uid: 2,
         from_eid: "EID-DEMO-001",
         to_eid: "EID-DEMO-002",

@@ -20,6 +20,11 @@ npm run dev
 
 Open **http://localhost:3010** for the landing page. Admin: http://localhost:3010/admin/dashboard
 
+For the shared Keyra login handoff, use the deployed callback URL
+`https://translate-keyra-production.up.railway.app/login?auth_return=1`.
+The external Get Started flow may return to `localhost`, but the shared session is not
+reliably available there after the cross-site redirect.
+
 > **Important:** Run commands from the `translate-keyra` folder, not `D:\react-projects`.
 > If the browser tab spins forever on port 3000, a stuck Node process is usually blocking it — use port **3010** (`npm run dev`) or stop old `node` processes on 3000/3001.
 
@@ -72,6 +77,7 @@ Receiving users must have `translation_enabled = true` in `translation_user_lang
 |---------|-----|
 | `pnpm run dev` in `D:\react-projects` fails | `cd translate-keyra` then `npm run dev` |
 | Browser never loads on :3000 | Use **http://localhost:3010** or end stuck Node on port 3000 |
+| Get Started returns but login stays on “Checking session…” locally | Use the deployed callback URL `https://translate-keyra-production.up.railway.app/login?auth_return=1` instead of a localhost return target |
 | Admin shows “Loading analytics…” forever | Postgres at `192.168.1.206` must be reachable; check `/api/health` |
 | `npm start` hangs then exits | DB migration failed — fix `DATABASE_URL` or `set SKIP_DB_MIGRATE=true` |
 

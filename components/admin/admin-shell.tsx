@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { KeyraLogo } from "@/components/brand/keyra-logo";
 import {
   LayoutDashboard,
   Phone,
@@ -12,7 +13,12 @@ import {
   CreditCard,
   Menu,
   X,
+  Loader2,
+  LogOut,
 } from "lucide-react";
+import { toast } from "sonner";
+import { useAuthSession } from "@/components/auth/auth-guard";
+import { getAuthUserDisplayLabel, logoutSharedKeyraSession } from "@/lib/keyra-auth";
 
 const MOBILE_QUERY = "(max-width: 900px)";
 
@@ -27,8 +33,12 @@ const nav = [
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useAuthSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const previousPathname = useRef(pathname);
 
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 
@@ -45,8 +55,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    closeSidebar();
-  }, [pathname, closeSidebar]);
+    if (previousPathname.current !== pathname) {
+      closeSidebar();
+      previousPathname.current = pathname;
+    }
+  }, [pathname, sidebarOpen, closeSidebar]);
 
   useEffect(() => {
     if (!isMobile || !sidebarOpen) return;
@@ -56,6 +69,30 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isMobile, sidebarOpen, closeSidebar]);
+
+  async function handleLogout() {
+    if (loggingOut) return;
+
+    setLoggingOut(true);
+    [
+      "token",
+      "userToken",
+      "employeeDetails",
+      "employees",
+      "mfa",
+      "appSessionLogId",
+    ].forEach((key) => localStorage.removeItem(key));
+
+    await logoutSharedKeyraSession();
+
+    toast.success("Logged out successfully");
+    router.replace("/login");
+    router.refresh();
+    setLoggingOut(false);
+  }
+
+  const userLabel = getAuthUserDisplayLabel(user);
+  const userSubtitle = user?.phone ? "Verified phone access" : "Shared Keyra session";
 
   return (
     <div
@@ -74,10 +111,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         aria-label="Admin navigation"
       >
         <div className="tr-sidebar-header">
-          <div>
-            <h1>KEYRA Translation</h1>
-            <p>translate.keyra.ie</p>
-          </div>
+          <Link href="/admin/dashboard" className="tr-sidebar-brand" onClick={closeSidebar}>
+            <KeyraLogo variant="dark" className="h-7" priority />
+          </Link>
           <button
             type="button"
             className="tr-sidebar-close"
@@ -125,11 +161,31 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             >
               <Menu size={20} strokeWidth={1.75} />
             </button>
-            <span className="tr-topbar-title">
-              Global Translation Administration Center
-            </span>
+            <span className="tr-topbar-title">Global Translation Administration Center</span>
           </div>
-          <span className="tr-kicker tr-topbar-kicker">Ciright Core · keyra-auth</span>
+          <div className="tr-topbar-end">
+            <span className="tr-kicker tr-topbar-kicker">Ciright Core · keyra-auth</span>
+            <div className="tr-topbar-user">
+              <div className="tr-topbar-user-copy">
+                <span className="tr-topbar-user-name">{userLabel}</span>
+                <span className="tr-topbar-user-meta">{userSubtitle}</span>
+              </div>
+              <button
+                type="button"
+                className="tr-btn tr-btn-secondary tr-topbar-logout"
+                onClick={() => void handleLogout()}
+                disabled={loggingOut}
+                aria-label="Logout"
+              >
+                {loggingOut ? (
+                  <Loader2 size={16} strokeWidth={1.75} className="tr-spin" />
+                ) : (
+                  <LogOut size={16} strokeWidth={1.75} />
+                )}
+                <span>{loggingOut ? "Logging out..." : "Logout"}</span>
+              </button>
+            </div>
+          </div>
         </header>
         <main className="tr-content">{children}</main>
       </div>

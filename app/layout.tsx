@@ -19,6 +19,11 @@ export const metadata: Metadata = {
   title: "KEYRA Translation | translate.keyra.ie",
   description:
     "Real-time multilingual enterprise communication across the KEYRA Ciright Platform",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

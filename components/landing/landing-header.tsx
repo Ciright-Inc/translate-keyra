@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { KeyraLogo } from "@/components/brand/keyra-logo";
 
 const navLinks = [
   { href: "#features", label: "Capabilities" },
@@ -41,7 +42,7 @@ export function LandingHeader() {
     <header className="tr-landing-header">
       <div className="tr-container tr-nav">
         <Link href="/" className="tr-nav-brand" onClick={closeMenu}>
-          translate.keyra.ie
+          <KeyraLogo variant="light" className="h-7" priority />
         </Link>
 
         <button
@@ -79,11 +80,11 @@ export function LandingHeader() {
             ),
           )}
           <Link
-            href="/admin/settings"
+            href="/login"
             className="tr-btn tr-btn-primary tr-nav-cta !text-white"
             onClick={closeMenu}
           >
-            Configure Languages
+            Get Started
           </Link>
         </nav>
       </div>

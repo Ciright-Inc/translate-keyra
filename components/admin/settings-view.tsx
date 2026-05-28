@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useAuthSession } from "@/components/auth/auth-guard";
 import { SUPPORTED_LANGUAGES } from "@/lib/translation/types";
 
 export function SettingsView() {
+  const { user } = useAuthSession();
   const [enabled, setEnabled] = useState(true);
   const [primary, setPrimary] = useState("en");
   const [secondary, setSecondary] = useState("ga");
@@ -12,9 +14,10 @@ export function SettingsView() {
   const [rate, setRate] = useState(1);
   const [transcription, setTranscription] = useState(true);
   const [platform, setPlatform] = useState<Array<{ config_key: string; config_value: unknown }>>([]);
+  const uid = user?.id ?? Number(process.env.NEXT_PUBLIC_TRANSLATE_DEV_UID ?? 1);
 
   useEffect(() => {
-    fetch("/api/user-preferences?uid=1")
+    fetch(`/api/user-preferences?uid=${uid}`)
       .then((r) => r.json())
       .then((j) => {
         const p = j.data?.preferences?.[0];
@@ -32,14 +35,14 @@ export function SettingsView() {
       .then((j) => {
         if (j.ok) setPlatform(j.data.platform);
       });
-  }, []);
+  }, [uid]);
 
   async function save() {
     const res = await fetch("/api/user-preferences", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        uid: 1,
+        uid,
         eid: "EID-DEMO-001",
         subscription_id: "SUB-KEYRA-IE",
         world_id: "WORLD-IE-01",
