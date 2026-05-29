@@ -11,9 +11,8 @@ import {
 import { useRouter } from "next/navigation";
 import { KeyraLogo } from "@/components/brand/keyra-logo";
 import {
-  AUTH_BACKEND_URL,
   AUTH_SESSION_SYNC_MS,
-  type AuthSessionResponse,
+  fetchSharedKeyraSession,
   type AuthSessionUser,
 } from "@/lib/keyra-auth";
 
@@ -43,21 +42,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const response = await fetch(`${AUTH_BACKEND_URL}/auth/session`, {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
+      const session = await fetchSharedKeyraSession();
 
-      const json = (await response.json()) as AuthSessionResponse;
-
-      if (response.ok && json.authenticated && json.user) {
-        setUser(json.user);
-        return json.user;
+      if (session.authenticated && session.user) {
+        setUser(session.user);
+        return session.user;
       }
     } catch {
       // Ignore network errors and send the user through the shared login handoff.

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyraLogo } from "@/components/brand/keyra-logo";
 import {
@@ -33,7 +33,6 @@ const nav = [
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { user } = useAuthSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -86,8 +85,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     await logoutSharedKeyraSession();
 
     toast.success("Logged out successfully");
-    router.replace("/login");
-    router.refresh();
+    window.location.replace("/login");
     setLoggingOut(false);
   }
 

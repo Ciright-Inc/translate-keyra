@@ -4,14 +4,13 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { KeyraLogo } from "@/components/brand/keyra-logo";
 import {
-  AUTH_BACKEND_URL,
   AUTH_RETURN_POLL_MS,
   AUTH_RETURN_RETRY_MS,
   AUTH_SESSION_SYNC_MS,
   TRANSLATE_AUTH_RETURN_PARAM,
   buildKeyraGetStartedLoginUrl,
   buildTranslateLoginReturnUrl,
-  type AuthSessionResponse,
+  fetchSharedKeyraSession,
 } from "@/lib/keyra-auth";
 
 function LoginPageContent() {
@@ -33,35 +32,12 @@ function LoginPageContent() {
   useEffect(() => {
     let cancelled = false;
 
-    async function hasAuthenticatedSession() {
-      try {
-        const response = await fetch(`${AUTH_BACKEND_URL}/auth/session`, {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-          headers: {
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
-        });
-
-        const json = (await response.json()) as AuthSessionResponse;
-
-        if (response.ok && json.authenticated) {
-          return true;
-        }
-      } catch {
-        // Let the user continue to the shared Keyra login flow.
-      }
-
-      return false;
-    }
-
     async function checkExistingSession() {
       const deadline = isAuthReturn ? Date.now() + AUTH_RETURN_POLL_MS : Date.now();
 
       do {
-        if (await hasAuthenticatedSession()) {
+        const session = await fetchSharedKeyraSession();
+        if (session.authenticated) {
           if (!cancelled) {
             router.replace("/admin/dashboard");
           }
@@ -97,26 +73,11 @@ function LoginPageContent() {
     const refreshOnReturn = () => {
       if (document.visibilityState !== "visible") return;
 
-      void (async () => {
-        try {
-          const response = await fetch(`${AUTH_BACKEND_URL}/auth/session`, {
-            method: "GET",
-            credentials: "include",
-            cache: "no-store",
-            headers: {
-              "Cache-Control": "no-cache",
-              Pragma: "no-cache",
-            },
-          });
-
-          const json = (await response.json()) as AuthSessionResponse;
-          if (response.ok && json.authenticated) {
-            router.replace("/admin/dashboard");
-          }
-        } catch {
-          // Keep the login screen available while waiting for the shared session.
+      void fetchSharedKeyraSession().then((session) => {
+        if (session.authenticated) {
+          router.replace("/admin/dashboard");
         }
-      })();
+      });
     };
 
     window.addEventListener("focus", refreshOnReturn);
@@ -141,26 +102,11 @@ function LoginPageContent() {
 
       if (document.visibilityState === "visible") {
         interval = window.setInterval(() => {
-          void (async () => {
-            try {
-              const response = await fetch(`${AUTH_BACKEND_URL}/auth/session`, {
-                method: "GET",
-                credentials: "include",
-                cache: "no-store",
-                headers: {
-                  "Cache-Control": "no-cache",
-                  Pragma: "no-cache",
-                },
-              });
-
-              const json = (await response.json()) as AuthSessionResponse;
-              if (response.ok && json.authenticated) {
-                router.replace("/admin/dashboard");
-              }
-            } catch {
-              // Best effort only while waiting on the shared Keyra session.
+          void fetchSharedKeyraSession().then((session) => {
+            if (session.authenticated) {
+              router.replace("/admin/dashboard");
             }
-          })();
+          });
         }, AUTH_SESSION_SYNC_MS);
       }
     };
@@ -234,8 +180,8 @@ function LoginPageContent() {
               <div className="tr-login-note">
                 <strong>Shared Keyra session</strong>
                 <p>
-                  Verify your phone once on `get-started.keyra.ie`, then return here
-                  already signed in with the same Keyra identity.
+                  Verify your phone once on Get Started, then return here already signed
+                  in with the same Keyra identity used across all Keyra sites.
                 </p>
               </div>
 
@@ -290,8 +236,8 @@ function LoginPageFallback() {
               <div className="tr-login-note">
                 <strong>Shared Keyra session</strong>
                 <p>
-                  Verify your phone once on `get-started.keyra.ie`, then return here
-                  already signed in with the same Keyra identity.
+                  Verify your phone once on Get Started, then return here already signed
+                  in with the same Keyra identity.
                 </p>
               </div>
 
