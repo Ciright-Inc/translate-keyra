@@ -13,12 +13,11 @@ import {
   CreditCard,
   Menu,
   X,
-  Loader2,
-  LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthSession } from "@/components/auth/auth-guard";
-import { getAuthUserDisplayLabel, logoutSharedKeyraSession } from "@/lib/keyra-auth";
+import { logoutSharedKeyraSession } from "@/lib/keyra-auth";
+import { TopBarUserChip } from "@/components/layout/top-bar-user-chip";
 
 const MOBILE_QUERY = "(max-width: 900px)";
 
@@ -88,9 +87,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     window.location.replace("/login");
     setLoggingOut(false);
   }
-
-  const userLabel = getAuthUserDisplayLabel(user);
-  const userSubtitle = user?.phone ? "Verified phone access" : "Shared Keyra session";
 
   return (
     <div
@@ -162,27 +158,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <span className="tr-topbar-title">Global Translation Administration Center</span>
           </div>
           <div className="tr-topbar-end">
-            <span className="tr-kicker tr-topbar-kicker">Ciright Core · keyra-auth</span>
-            <div className="tr-topbar-user">
-              <div className="tr-topbar-user-copy">
-                <span className="tr-topbar-user-name">{userLabel}</span>
-                <span className="tr-topbar-user-meta">{userSubtitle}</span>
-              </div>
-              <button
-                type="button"
-                className="tr-btn tr-btn-secondary tr-topbar-logout"
-                onClick={() => void handleLogout()}
-                disabled={loggingOut}
-                aria-label="Logout"
-              >
-                {loggingOut ? (
-                  <Loader2 size={16} strokeWidth={1.75} className="tr-spin" />
-                ) : (
-                  <LogOut size={16} strokeWidth={1.75} />
-                )}
-                <span>{loggingOut ? "Logging out..." : "Logout"}</span>
-              </button>
-            </div>
+            <TopBarUserChip
+              user={user}
+              onLogout={handleLogout}
+              loggingOut={loggingOut}
+            />
           </div>
         </header>
         <main className="tr-content">{children}</main>

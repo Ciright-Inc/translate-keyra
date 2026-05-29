@@ -238,6 +238,18 @@ export function getAuthUserDisplayLabel(user: AuthSessionUser | null | undefined
   return "Keyra member";
 }
 
+export function getAuthUserInitials(user: AuthSessionUser | null | undefined) {
+  const label = getAuthUserDisplayLabel(user);
+  if (!label || label === "Keyra member") return "K";
+
+  const parts = label.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
+  }
+
+  return label.slice(0, 2).toUpperCase();
+}
+
 export async function fetchSharedKeyraSession() {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), AUTH_SESSION_TIMEOUT_MS);
